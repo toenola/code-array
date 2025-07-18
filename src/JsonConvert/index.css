@@ -1,0 +1,166 @@
+.json-convert {
+  display: flex;
+  flex-direction: column;
+  height: 100vh;
+  padding: 10px;
+  box-sizing: border-box;
+}
+
+.json-actions-top {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  margin-bottom: 10px;
+}
+
+.json-actions-bottom {
+  display: flex;
+  justify-content: flex-end;
+  gap: 10px;
+  margin-top: 10px;
+}
+
+.json-actions-top button,
+.json-actions-bottom button {
+  padding: 5px 15px;
+  border-radius: 4px;
+  background-color: #666;
+  color: white;
+}
+
+.json-editor {
+  flex: 1;
+  display: flex;
+  position: relative;
+  border: 1px solid #ccc;
+  border-radius: 4px;
+  background-color: white;
+  overflow: hidden;
+  /* 删除 height: 0 和 min-height: 0，修复容器高度计算问题 */
+}
+
+.json-editor textarea {
+  flex: 1;
+  padding: 12px 10px 10px;
+  border: none;
+  outline: none;
+  font-family: monospace;
+  font-size: 14px;
+  white-space: pre-wrap;
+  word-wrap: break-word;
+  line-height: 1.5em;
+  resize: none;
+  color: #000;
+  background-color: white;
+  position: relative;
+  /* 添加 top: 0 确保文本从容器顶部开始渲染 */
+  top: 0;
+}
+
+.line-numbers {
+  padding: 10px 8px;
+  background-color: #f0f0f0;
+  border-right: 1px solid #ccc;
+  text-align: right;
+  user-select: none;
+  color: #999;
+  font-family: monospace;
+  font-size: 14px;
+  overflow-y: auto;
+  flex-shrink: 0; /* 防止宽度被压缩 */
+  width: 40px; /* 固定行号宽度 */
+}
+
+.line-numbers {
+  scrollbar-width: none; /* Firefox */
+  -ms-overflow-style: none; /* IE 和 Edge */
+  pointer-events: none; /* 禁止鼠标事件 */
+  position: relative;
+  top: 0;
+  left: 0;
+}
+
+.line-numbers::-webkit-scrollbar {
+  display: none; /* Chrome, Safari 和 Opera */
+}
+
+/* 保持现有 .line-number 样式 */
+.line-number {
+  height: 1.5em;
+  line-height: 1.5em;
+  text-align: right;
+  padding-right: 0.5em;
+  color: #999;
+}
+
+.json-editor textarea {
+  margin: 0; 
+  flex: 1;
+  padding-top: 10px; /* 修改为统一的10px内边距 */
+  border: none;
+  outline: none;
+  font-family: monospace;
+  font-size: 14px;
+  white-space: pre-wrap; /* 确保长文本自动换行 */
+  word-wrap: break-word; /* 允许长单词换行 */
+  line-height: 1.5em; /* 明确设置行高，确保与行号对齐 */
+  resize: none;
+  color: #000;
+  background-color: white;
+  position: relative;
+  height: 100%; /* 占满父容器高度 */
+  min-height: 300px; /* 设置最小高度 */
+}
+
+/* 错误标记样式 */
+.json-editor textarea.has-error {
+  background-image: linear-gradient(transparent calc(var(--error-line) * 1.5em - 0.5em), 
+                                   #ffdddd calc(var(--error-line) * 1.5em - 0.5em), 
+                                   #ffdddd calc(var(--error-line) * 1.5em + 0.5em), 
+                                   transparent calc(var(--error-line) * 1.5em + 0.5em));
+}
+
+.json-editor textarea.has-error::after {
+  content: "";
+  position: absolute;
+  left: calc(var(--error-column) * 0.6em + 10px);
+  top: calc(var(--error-line) * 1.5em);
+  width: 0.6em;
+  height: 1.5em;
+  background-color: rgba(255, 0, 0, 0.3);
+  pointer-events: none;
+}
+
+
+
+.json-editor textarea.has-error {
+  background-image: 
+    linear-gradient(45deg, transparent 65%, red 80%, transparent 90%),
+    linear-gradient(135deg, transparent 5%, red 15%, transparent 25%),
+    linear-gradient(135deg, transparent 45%, red 55%, transparent 65%),
+    linear-gradient(45deg, transparent 25%, red 35%, transparent 50%);
+  background-size: 14px 3px;
+  background-position: 0 calc(var(--error-line) * 1.5em + 1.5em);
+  background-repeat: repeat-x;
+  animation: errorWave 1s infinite linear;
+}
+
+.json-error {
+  color: red;
+  margin-top: 10px;
+  font-family: monospace;
+}
+
+.json-input {
+  padding-top: 16px; /* 增加顶部内边距，从8px调整为16px */
+  padding-bottom: 16px;
+  line-height: 1.5em;
+  box-sizing: border-box; /* 确保内边距包含在元素总高度内 */
+  border-top: 1px solid transparent; /* 额外增加顶部占位 */
+}
+
+.text-container {
+  padding-top: 16px; /* 增加容器顶部内边距，从4px调整为8px */
+  display: flex;
+  align-items: flex-start; /* 确保内容从顶部开始对齐 */
+}

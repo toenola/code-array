@@ -1,0 +1,57 @@
+{
+  "main": "index.html",
+  "preload": "preload/services.js",
+  "logo": "logo.png",
+  "development": {
+    "main": "http://localhost:5173"
+  },
+  "features": [
+    {
+      "code": "read",
+      "explain": "功能指令+匹配指令示例，使用 node.js 能力读文件",
+      "cmds": [
+        "读文件",
+        {
+          "type": "files",
+          "fileType": "file",
+          "maxLength": 1,
+          "label": "读文件"
+        }
+      ]
+    },
+    {
+      "code": "write",
+      "explain": "匹配指令示例，使用 node.js 能力写文件",
+      "mainHide": true,
+      "cmds": [
+        {
+          "type": "over",
+          "label": "保存为文件"
+        },
+        {
+          "type": "img",
+          "label": "保存为文件"
+        }
+      ]
+    },
+    {
+      "code": "json_convert",
+      "explain": "JSON/YAML/XML转换工具，支持格式化、转义、压缩等功能",
+      "cmds": [
+        "JSON转换",
+        "json转换",
+        "json",
+        "YAML转换",
+        "yaml转换",
+        "yaml",
+        "XML转换",
+        "xml转换",
+        "xml",
+        {
+          "type": "over",
+          "label": "格式转换"
+        }
+      ]
+    }
+  ]
+}
