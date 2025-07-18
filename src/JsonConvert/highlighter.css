@@ -1,0 +1,125 @@
+/* 语法高亮样式 - 白底主题 */
+
+/* 通用样式 */
+.syntax-highlighter {
+  font-family: 'Consolas', 'Monaco', 'Courier New', monospace;
+  line-height: 1.5;
+  white-space: pre-wrap;
+  word-wrap: break-word;
+  background: #ffffff; /* 白色背景 */
+  color: #000000; /* 黑色文字 */
+}
+
+/* JSON高亮样式 - 白底主题 */
+.json-string {
+  color: #a31515; /* 深红色 - 字符串 */
+}
+
+.json-key {
+  color: #0451a5; /* 深蓝色 - 键名 */
+}
+
+.json-number {
+  color: #098658; /* 深绿色 - 数字 */
+}
+
+.json-boolean {
+  color: #0000ff; /* 蓝色 - 布尔值 */
+}
+
+.json-null {
+  color: #0000ff; /* 蓝色 - null */
+}
+
+.json-punctuation {
+  color: #000000; /* 黑色 - 标点符号 */
+}
+
+.json-colon {
+  color: #000000; /* 黑色 - 冒号 */
+}
+
+/* XML高亮样式 - 白底主题 */
+.xml-tag-name {
+  color: #0000ff; /* 蓝色 - 标签名 */
+  font-weight: bold;
+}
+
+.xml-attr-name {
+  color: #0451a5; /* 深蓝色 - 属性名 */
+}
+
+.xml-attr-value {
+  color: #a31515; /* 深红色 - 属性值 */
+}
+
+.xml-tag-punctuation {
+  color: #0000ff; /* 明显的蓝色 */
+  font-weight: bold; /* 加粗显示 */
+}
+
+/* 浅色主题 */
+.light-theme .xml-tag-punctuation {
+  color: #0000ff;
+}
+
+.xml-text {
+  color: #000000; /* 黑色 - 文本内容 */
+}
+
+.xml-comment {
+  color: #008000; /* 绿色 - 注释 */
+  font-style: italic;
+}
+
+.xml-cdata {
+  color: #a31515; /* 深红色 - CDATA */
+}
+
+.xml-doctype {
+  color: #800080; /* 紫色 - DOCTYPE */
+}
+
+.xml-processing {
+  color: #800080; /* 紫色 - 处理指令 */
+}
+
+/* YAML高亮样式 - 白底主题 */
+.yaml-key {
+  color: #0451a5; /* 深蓝色 - 键名 */
+}
+
+.yaml-string {
+  color: #a31515; /* 深红色 - 字符串 */
+}
+
+.yaml-number {
+  color: #098658; /* 深绿色 - 数字 */
+}
+
+.yaml-boolean {
+  color: #0000ff; /* 蓝色 - 布尔值 */
+}
+
+.yaml-null {
+  color: #0000ff; /* 蓝色 - null */
+}
+
+.yaml-comment {
+  color: #008000; /* 绿色 - 注释 */
+  font-style: italic;
+}
+
+.yaml-document {
+  color: #800080; /* 紫色 - 文档分隔符 */
+  font-weight: bold;
+}
+
+.yaml-list {
+  color: #000000; /* 黑色 - 列表项 */
+  font-weight: bold;
+}
+
+.yaml-colon {
+  color: #000000; /* 黑色 - 冒号 */
+}

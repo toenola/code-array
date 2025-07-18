@@ -1,13 +1,18 @@
 import { useEffect, useState, useRef, useCallback } from 'react'
 import './index.css'
+import HighlightedText from './HighlightedText.jsx';
+import { highlighter } from './highlighter.js';
 
 
 export default function JsonConvert({ enterAction }) {
   const [text, setText] = useState('')
   const [error, setError] = useState('')
   const [errorPosition, setErrorPosition] = useState(null)
+  // 移除手动高亮状态，改为自动检测
+  const [isFormatted, setIsFormatted] = useState(false)
+  const [detectedFormat, setDetectedFormat] = useState('json')
   const textareaRef = useRef(null)
-  const lineNumbersRef = useRef(null) // 添加行号容器引用
+  const lineNumbersRef = useRef(null)
 
   // 添加滚动同步处理
   useEffect(() => {
@@ -25,72 +30,90 @@ export default function JsonConvert({ enterAction }) {
     return () => textarea.removeEventListener('scroll', handleScroll);
   }, []);
 
-  const renderLineNumbers = useCallback(() => {
-  if (!textareaRef.current) return null;
+    const renderLineNumbers = useCallback(() => {
+    if (!text) return null;
 
-  const textarea = textareaRef.current;
-  const style = window.getComputedStyle(textarea);
-
-  // 使用更精确的计算方式
-  const lineHeight = parseFloat(style.lineHeight);
-  const fontSize = parseFloat(style.fontSize);
-  const paddingTop = parseFloat(style.paddingTop);
-
-  // 计算需要补偿的行数（向上取整）
-  const offsetLines = Math.ceil(paddingTop / lineHeight);
-
-  const paddingLeft = parseInt(style.paddingLeft);
-  const paddingRight = parseInt(style.paddingRight);
-  const textareaWidth = textarea.clientWidth - paddingLeft - paddingRight;
-
-  const measureSpan = document.createElement('span');
-  measureSpan.style.visibility = 'hidden';
-  measureSpan.style.position = 'absolute';
-  measureSpan.style.whiteSpace = 'nowrap';
-  measureSpan.style.fontSize = fontSize + 'px';
-  measureSpan.style.fontFamily = style.fontFamily;
-  measureSpan.style.fontWeight = style.fontWeight;
-  document.body.appendChild(measureSpan);
-
-  const lines = text.split('\n');
-  const lineNumbers = [];
-
-  // 添加顶部占位补偿
-  for (let i = 0; i < offsetLines; i++) {
-    lineNumbers.push(
-      <div
-        key={`offset-${i}`}
-        className="line-number"
-        style={{ height: `${lineHeight}px`, minHeight: `${lineHeight}px` }}
-      ></div>
-    );
-  }
-
-  lines.forEach((line, index) => {
-    if (line.trim() === '') {
-      lineNumbers.push(
-        <div key={`line-${index}`} className="line-number">{index + 1}</div>
-      );
-      return;
+    // 根据当前模式选择正确的元素引用
+    let targetElement;
+    if (isFormatted) {
+      // 高亮模式下，尝试获取高亮显示的元素
+      targetElement = document.querySelector('.highlighted-content') || 
+                     document.querySelector('.highlight-display');
+    } else {
+      // 编辑模式下，使用textarea引用
+      targetElement = textareaRef.current;
     }
 
-    measureSpan.textContent = line;
-    const textWidth = measureSpan.offsetWidth;
-    const lineCount = Math.ceil(textWidth / textareaWidth) || 1;
-
-    for (let i = 0; i < lineCount; i++) {
-      lineNumbers.push(
-        <div key={`line-${index}-${i}`} className="line-number">
-          {i === 0 ? index + 1 : ''}
+    if (!targetElement) {
+      // 如果找不到目标元素，使用简单的行号计算
+      const lines = text.split('\n');
+      return (
+        <div className="line-numbers">
+          {lines.map((_, index) => (
+            <div key={`line-${index}`} className="line-number">
+              {index + 1}
+            </div>
+          ))}
         </div>
       );
     }
-  });
 
-  document.body.removeChild(measureSpan);
+    const style = window.getComputedStyle(targetElement);
+    const lineHeight = parseFloat(style.lineHeight) || parseFloat(style.fontSize) * 1.5;
+    const fontSize = parseFloat(style.fontSize);
+    const paddingTop = parseFloat(style.paddingTop);
+    const offsetLines = Math.ceil(paddingTop / lineHeight);
+    const paddingLeft = parseInt(style.paddingLeft);
+    const paddingRight = parseInt(style.paddingRight);
+    const textareaWidth = targetElement.clientWidth - paddingLeft - paddingRight;
 
-  return <div className="line-numbers">{lineNumbers}</div>;
-}, [text]);
+    const measureSpan = document.createElement('span');
+    measureSpan.style.visibility = 'hidden';
+    measureSpan.style.position = 'absolute';
+    measureSpan.style.whiteSpace = 'nowrap';
+    measureSpan.style.fontSize = fontSize + 'px';
+    measureSpan.style.fontFamily = style.fontFamily;
+    measureSpan.style.fontWeight = style.fontWeight;
+    document.body.appendChild(measureSpan);
+
+    const lines = text.split('\n');
+    const lineNumbers = [];
+
+    // 添加顶部占位补偿
+    for (let i = 0; i < offsetLines; i++) {
+      lineNumbers.push(
+        <div
+          key={`offset-${i}`}
+          className="line-number"
+          style={{ height: `${lineHeight}px`, minHeight: `${lineHeight}px` }}
+        ></div>
+      );
+    }
+
+    lines.forEach((line, index) => {
+      if (line.trim() === '') {
+        lineNumbers.push(
+          <div key={`line-${index}`} className="line-number">{index + 1}</div>
+        );
+        return;
+      }
+
+      measureSpan.textContent = line;
+      const textWidth = measureSpan.offsetWidth;
+      const lineCount = Math.ceil(textWidth / textareaWidth) || 1;
+
+      for (let i = 0; i < lineCount; i++) {
+        lineNumbers.push(
+          <div key={`line-${index}-${i}`} className="line-number">
+            {i === 0 ? index + 1 : ''}
+          </div>
+        );
+      }
+    });
+
+    document.body.removeChild(measureSpan);
+    return <div className="line-numbers">{lineNumbers}</div>;
+  }, [text, isFormatted]); // 添加 isFormatted 到依赖项
 
   // 修复useEffect依赖问题
   useEffect(() => {
@@ -178,262 +201,73 @@ export default function JsonConvert({ enterAction }) {
     }
   }, [enterAction])
 
-  // 智能格式化JSON - 智能格式化JSON - 修复版（重新加入注释移除步骤）
-  const smartFormatJson = (jsonText) => {
-    // 步骤1: 首先移除注释
-    let processedText;
-    try {
-      processedText = window.services.removeJsonComments(jsonText);
-    } catch (e) {
-      console.error('移除注释失败:', e);
-      processedText = jsonText; // 使用原始文本继续处理
+    // 添加格式检测逻辑
+  useEffect(() => {
+    if (text && window.services) {
+      try {
+        const format = window.services.detectFormat(text)
+        setDetectedFormat(format)
+      } catch (e) {
+        setDetectedFormat('json')
+      }
     }
-    let isUnescaped = false;
+  }, [text])
 
-    // 步骤2: 尝试去除转义
+  // 修改格式化函数，格式化后自动设置为已格式化状态
+  const handleSmartFormat = () => {
     try {
-      processedText = window.services.unescapeJson(processedText);
-      isUnescaped = true;
-    } catch (e) {
-      // 去除转义失败时继续使用原始文本
-    }
-
-    // 步骤3: 替换中文标点为英文标点
-    processedText = replaceChinesePunctuation(processedText);
-
-    // 步骤4: 移除对象/数组末尾多余的逗号
-    processedText = removeTrailingCommas(processedText);
-
-    // 步骤5: 尝试解析处理后的JSON
-    try {
-      const obj = JSON.parse(processedText);
-      return JSON.stringify(obj, null, 2);
-    } catch (e) {
-      // 如果之前未尝试去除转义，现在尝试
-      if (!isUnescaped) {
-        try {
-          const unescapedText = window.services.unescapeJson(processedText);
-          const obj = JSON.parse(unescapedText);
-          return JSON.stringify(obj, null, 2);
-        } catch (e2) {
-          // 步骤6: 尝试补全缺失的括号/方括号
-          try {
-            const balancedText = balanceBrackets(unescapedText);
-            const obj = JSON.parse(balancedText);
-            return JSON.stringify(obj, null, 2);
-          } catch (e3) {
-            // 所有尝试失败，抛出原始错误
-            throw e;
-          }
-        }
+      // 使用智能格式化
+      const format = window.services.detectFormat(text)
+      let formatted
+      
+      if (format === 'json') {
+        formatted = window.services.formatJson(text)
+      } else if (format === 'yaml') {
+        formatted = window.services.formatYaml(text)
+      } else if (format === 'xml') {
+        formatted = window.services.formatXml(text)
       } else {
-        // 步骤6: 尝试补全缺失的括号/方括号
-        try {
-          const balancedText = balanceBrackets(processedText);
-          const obj = JSON.parse(balancedText);
-          return JSON.stringify(obj, null, 2);
-        } catch (e2) {
-          // 所有尝试失败，抛出原始错误
-          throw e;
-        }
+        // 默认尝试JSON格式化
+        formatted = smartFormatJson(text)
       }
-    }
-  };
-
-  //  修改为智能格式化（支持JSON和YAML）
-  const smartFormatText = (text) => {
-    try {
-      return window.services.formatText(text);
-    } catch (e) {
-      throw e;
-    }
-  };
-
-  // 替换中文标点为英文标点
-  const replaceChinesePunctuation = (text) => {
-    return text
-      .replace(/，/g, ',')      // 中文逗号替换为英文逗号
-      .replace(/“|”/g, '"')   // 中文引号替换为英文引号
-      .replace(/‘|’/g, '"')   // 中文单引号替换为英文引号
-      .replace(/；/g, ';')      // 中文分号替换为英文分号
-      .replace(/：/g, ':');     // 中文冒号替换为英文冒号
-  };
-
-  // 移除对象/数组末尾多余的逗号
-  const removeTrailingCommas = (text) => {
-    // 移除对象中最后一个属性后的逗号
-    text = text.replace(/,(\s*[\]}])/g, '$1');
-    // 移除数组中最后一个元素后的逗号
-    text = text.replace(/,(\s*[\]])/g, '$1');
-    return text;
-  };
-
-  // 平衡括号和方括号（优化版）
-  const balanceBrackets = (text) => {
-    const stack = [];
-    const bracketPairs = { '{': '}', '[': ']' };
-    const closingBrackets = new Set(['}', ']']);
-
-    // 分析括号平衡
-    for (const char of text) {
-      if (char === '{' || char === '[') {
-        stack.push(char);
-      } else if (closingBrackets.has(char)) {
-        if (stack.length === 0) continue; // 忽略多余的闭括号
-        const opening = stack.pop();
-        if (bracketPairs[opening] !== char) {
-          // 括号类型不匹配，修复为正确的类型
-          text = text.substring(0, text.indexOf(char)) + bracketPairs[opening] + text.substring(text.indexOf(char) + 1);
-        }
-      }
-    }
-
-    // 补全剩余的开括号
-    while (stack.length > 0) {
-      const opening = stack.pop();
-      text += bracketPairs[opening];
-    }
-
-    return text;
-  };
-
-  // 补全缺失的引号 - 修复引号转义
-  const completeQuotes = (text) => {
-    let inString = false;
-    let escaped = false;
-    let result = '';
-
-    for (const char of text) {
-      if (char === '"' && !escaped) {
-        inString = !inString;
-      } else if (char === '\\' && inString) {
-        escaped = !escaped;
-      } else {
-        escaped = false;
-      }
-      result += char;
-    }
-
-    // 如果结束时仍在字符串中，补全引号
-    if (inString) {
-      result += '"';
-    }
-
-    return result;
-  };
-
-  // 修正JSON语法（添加缺失的逗号等）
-  const correctJsonSyntax = (text) => {
-    // 简单的标记化处理
-    const tokens = text.match(/([{}[\]]|\"[^\"]*\"|\d+|true|false|null|,|:)/g) || [];
-    const result = [];
-    const stack = [];
-    const opening = new Set(['{', '[']);
-    const closing = new Set(['}', ']']);
-    const values = new Set(['true', 'false', 'null']);
-
-    for (let i = 0; i < tokens.length; i++) {
-      const token = tokens[i];
-      const nextToken = tokens[i + 1];
-      result.push(token);
-
-      if (opening.has(token)) {
-        stack.push(token);
-      } else if (closing.has(token)) {
-        stack.pop();
-      } else if (token === '"' && nextToken && nextToken !== ':') {
-        // 如果字符串后没有冒号，添加逗号
-        result.push(',');
-      } else if ((token === '}' || token === ']') && nextToken && opening.has(nextToken)) {
-        // 如果对象/数组后是新的对象/数组，添加逗号
-        result.push(',');
-      } else if (values.has(token.toLowerCase()) && nextToken && !closing.has(nextToken) && nextToken !== ',') {
-        // 如果值后面没有逗号或闭括号，添加逗号
-        result.push(',');
-      }
-    }
-
-    return result.join('');
-  };
-
-  // 定位JSON错误位置
-  const highlightJsonError = (jsonText, error) => {
-    // 增强错误位置提取逻辑，支持多种错误消息格式
-    const positionMatch = error.message.match(/(position|at position|index)\s+(\d+)/i);
-    if (positionMatch && positionMatch[2]) {
-      const position = parseInt(positionMatch[2], 10);
-      setErrorPosition(position);
       
-      // 获取错误行号和列号
-      const textBeforeError = jsonText.substring(0, position);
-      const errorLine = textBeforeError.split('\n').length;
-      const errorColumn = textBeforeError.split('\n').pop().length + 1;
-      
-      // 更新错误消息，包含行号和列号
-      setError(`JSON格式错误 (第 ${errorLine} 行, 第 ${errorColumn} 列): ${error.message}`);
-      
-      // 使用requestAnimationFrame确保DOM更新后执行
-      requestAnimationFrame(() => {
-        if (textareaRef.current) {
-          // 确保文本区域已渲染最新内容
-          textareaRef.current.value = jsonText;
-          // 设置光标位置
-          textareaRef.current.focus();
-          textareaRef.current.setSelectionRange(position, position);
-          // 滚动到错误位置
-          textareaRef.current.scrollTop = 
-            (errorLine - 5) * textareaRef.current.scrollHeight / textareaRef.current.value.split('\n').length;
-        }
-      });
-    } else {
-      setErrorPosition(null);
-      setError('JSON格式错误: ' + error.message);
-    }
-  }
-
-  const handleInputChange = (e) => {
-    const value = e.target.value
-    setText(value)
-    // 清除错误标记
-    if (textareaRef.current) {
-      textareaRef.current.classList.remove('has-error')
-    }
-    setErrorPosition(null)
-    setError('')
-  }
-
-  // 修改handleSmartFormat函数使用新的智能格式化方法
-  function handleSmartFormat() {
-    try {
-      const formatted = smartFormatText(text);
-      if (textareaRef.current && textareaRef.current.value !== formatted) {
-        // 优化：避免全选操作，直接替换文本内容
-        const textarea = textareaRef.current;
-        const start = textarea.selectionStart;
-        const end = textarea.selectionEnd;
-        
-        // 使用更高效的API替换文本
-        textarea.setRangeText(formatted, 0, textarea.value.length);
-        textarea.focus();
-        textarea.setSelectionRange(start, start);
-        setText(textarea.value);
-      }
-      setError('');
-      setErrorPosition(null);
+      setText(formatted)
+      setIsFormatted(true) // 格式化后启用高亮
+      setError('')
+      setErrorPosition(null)
       if (textareaRef.current) {
-        textareaRef.current.classList.remove('has-error');
+        textareaRef.current.classList.remove('has-error')
       }
     } catch (err) {
-      // 传递当前文本到错误处理函数
-      highlightJsonError(text, err);
+      highlightJsonError(text, err)
+    }
+  }
+
+  // 文本改变时重置格式化状态
+  const handleInputChange = (e) => {
+    setText(e.target.value)
+    setIsFormatted(false) // 手动编辑时取消高亮
+    setError('')
+    setErrorPosition(null)
+    if (textareaRef.current) {
+      textareaRef.current.classList.remove('has-error')
     }
   }
 
   // 修改其他处理函数使用新的服务方法
   const handleMinify = () => {
     try {
-      const minified = window.services.minifyText(text)
+      const format = window.services.detectFormat(text)
+      
+      // 只有JSON格式才支持最小化
+      if (format !== 'json') {
+        setError('只有JSON格式支持最小化操作')
+        return
+      }
+      
+      const minified = JSON.stringify(JSON.parse(text))
       setText(minified)
+      setIsFormatted(true) // 最小化后也启用高亮
       setError('')
       setErrorPosition(null)
       if (textareaRef.current) {
@@ -512,11 +346,12 @@ export default function JsonConvert({ enterAction }) {
       } else if (format === 'xml') {
         jsonText = window.services.xmlToJson(text)
       } else if (format === 'json') {
-        // 如果已经是JSON，只需格式化
         jsonText = window.services.formatJson(text)
       }
       
       setText(jsonText)
+      setIsFormatted(true)  // 确保设置高亮状态
+      setDetectedFormat('json')  // 设置检测到的格式
       setError('')
       setErrorPosition(null)
       if (textareaRef.current) {
@@ -538,11 +373,12 @@ export default function JsonConvert({ enterAction }) {
       } else if (format === 'yaml') {
         xmlText = window.services.yamlToXml(text)
       } else if (format === 'xml') {
-        // 如果已经是XML，只需格式化
         xmlText = window.services.formatXml(text)
       }
       
       setText(xmlText)
+      setIsFormatted(true)  // 确保设置高亮状态
+      setDetectedFormat('xml')  // 设置检测到的格式
       setError('')
       setErrorPosition(null)
       if (textareaRef.current) {
@@ -562,13 +398,14 @@ export default function JsonConvert({ enterAction }) {
       if (format === 'json') {
         yamlText = window.services.jsonToYaml(text)
       } else if (format === 'xml') {
-        yamlText = window.services.xmlToYaml(text)
+        yamlText = window.services.xmlToYaml(text)  // 修复：改为 xmlToYaml
       } else if (format === 'yaml') {
         // 如果已经是YAML，只需格式化
         yamlText = window.services.formatYaml(text)
       }
       
       setText(yamlText)
+      setIsFormatted(true)  // 添加：格式化后启用高亮
       setError('')
       setErrorPosition(null)
       if (textareaRef.current) {
@@ -629,18 +466,36 @@ export default function JsonConvert({ enterAction }) {
         <button onClick={handleConvertToYaml}>转YAML</button>
         <button onClick={handleConvertToJson}>转JSON</button>
         <button onClick={handleConvertToXml}>转XML</button>
+        {/* 移除高亮切换按钮 */}
       </div>
       
       <div className="json-editor">
         <div ref={lineNumbersRef} className="line-numbers">
           {renderLineNumbers()}
         </div>
-        <textarea
-          ref={textareaRef}
-          value={text}
-          onChange={handleInputChange}
-          spellCheck="false"
-        />
+        {/* 根据是否格式化自动选择显示模式 */}
+        {isFormatted ? (
+          <div 
+            className="highlight-display"
+            onDoubleClick={() => setIsFormatted(false)}
+            style={{ cursor: 'pointer' }}
+            title="双击切换到编辑模式"
+          >
+            <HighlightedText 
+              text={text} 
+              format={detectedFormat}
+              className="highlighted-content"
+            />
+          </div>
+        ) : (
+          <textarea
+            ref={textareaRef}
+            value={text}
+            onChange={handleInputChange}
+            spellCheck="false"
+            placeholder="请输入或粘贴JSON/XML/YAML内容..."
+          />
+        )}
       </div>
       {error && <div className="json-error">{error}</div>}
       
